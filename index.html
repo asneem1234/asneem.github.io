@@ -193,14 +193,14 @@
             text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
         }
 
-        /* Enhanced CTA button styling - fix z-index and pointer events */
+        /* Enhanced CTA button styling */
         .btn {
             padding: 1rem 2rem;
             background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(10px);
             border: 2px solid #00ffff;
             color: #00ffff;
-            text-decoration: none !important; /* Ensure text decoration is removed */
+            text-decoration: none;
             font-family: inherit;
             font-weight: 500;
             transition: all 0.3s ease;
@@ -212,9 +212,8 @@
             text-align: center;
             letter-spacing: 1px;
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-            z-index: 50 !important; /* Higher z-index to ensure clickability */
-            pointer-events: auto !important; /* Explicitly enable pointer events */
-            display: inline-block; /* Ensure proper display */
+            z-index: 15; /* Increased z-index */
+            pointer-events: auto; /* Ensure clicks are captured */
         }
         
         .btn:hover {
@@ -271,9 +270,6 @@
             justify-content: center;
             flex-wrap: wrap;
             margin-top: 2rem;
-            position: relative;
-            z-index: 100; /* Ensure buttons container has high z-index */
-            pointer-events: auto; /* Enable pointer events */
         }
 
         .about h2, .projects h2, .skills h2, .contact h2, .research h2, .achievements h2 {
@@ -876,7 +872,7 @@
         backdrop-filter: blur(10px);
         border: 2px solid #00ffff;
         color: #00ffff;
-        text-decoration: none !important; /* Ensure text decoration is removed */
+        text-decoration: none;
         font-family: inherit;
         font-weight: 500;
         transition: all 0.3s ease;
@@ -888,9 +884,8 @@
         text-align: center;
         letter-spacing: 1px;
         box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-        z-index: 50 !important; /* Higher z-index to ensure clickability */
-        pointer-events: auto !important; /* Explicitly enable pointer events */
-        display: inline-block; /* Ensure proper display */
+        z-index: 15; /* Increased z-index */
+        pointer-events: auto; /* Ensure clicks are captured */
     }
     
     /* Fix ripple effect to not interfere with clicks */
@@ -1423,70 +1418,411 @@
         }
         
         // Fix the document click event handler to better detect button clicks
-        document.addEventListener('click', function(event) {
-            // First check if we're clicking on a button or link
-            let isInteractiveElement = false;
-            
-            // Check for elements that should handle their own clicks
-            const target = event.target;
-            const interactiveSelectors = [
-                'a', 'button', '.btn', '.project-link', 
-                '.research-link', '.contact-link'
-            ];
-            
-            // Check if the click target or any of its parents match our interactive selectors
-            interactiveSelectors.forEach(selector => {
-                if (target.matches && target.matches(selector) || target.closest(selector)) {
-                    isInteractiveElement = true;
-                }
-            });
-            
-            // If we clicked on something interactive, just let it do its thing
-            if (isInteractiveElement) {
-                console.log("Clicked interactive element - allowing default behavior");
+        document.addEventListener('click', (event) => {
+            // Check if the clicked element is a button, link, or other interactive element
+            // Improved detection to ensure buttons work properly
+            if (event.target.tagName === 'A' || 
+                event.target.closest('a') ||
+                event.target.tagName === 'BUTTON' || 
+                event.target.closest('button') ||
+                event.target.classList.contains('project-link') || 
+                event.target.classList.contains('research-link') || 
+                event.target.classList.contains('contact-link') ||
+                event.target.classList.contains('btn') || 
+                event.target.closest('.btn')) {
+                // Don't navigate when clicking on interactive elements - let their default actions work
                 return;
             }
             
-            // Otherwise, navigate to the next section
-            console.log("Non-interactive click - navigating to next section");
+            // Navigate to the next section
             updateSection((currentSection + 1) % totalSections);
         });
         
-        // Replace the DOMContentLoaded event to fix button handling
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log("DOM loaded - setting up buttons");
+        // Initialize section indicator
+        updateSectionIndicator();
         
-        // Fix for ripple effect without preventing navigation
-        document.querySelectorAll('.btn').forEach(button => {
-            // Remove all existing event listeners to start clean
-            const newButton = button.cloneNode(true);
-            button.parentNode.replaceChild(newButton, button);
+        // Make first section visible on load
+        sections[0].classList.add('active');
+
+        // Typing animation
+        const typingTexts = [
+            "Computer Science & AI Student",
+            "B.Tech Student at VIT-AP University",
+            "Published Research Author",
+            "First Runner-Up – HACKVERSE Hackathon"
+        ];
+        
+        let textIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        const typingElement = document.getElementById('typing-text');
+        
+        function typeText() {
+            const currentText = typingTexts[textIndex];
             
-            // Add only the effect without interfering with navigation
-            newButton.addEventListener('click', function(event) {
+            if (isDeleting) {
+                typingElement.textContent = currentText.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                typingElement.textContent = currentText.substring(0, charIndex + 1);
+                charIndex++;
+            }
+            
+            let typeSpeed = isDeleting ? 50 : 100;
+            
+            if (!isDeleting && charIndex === currentText.length) {
+                typeSpeed = 2000;
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                textIndex = (textIndex + 1) % typingTexts.length;
+                typeSpeed = 500;
+            }
+            
+            setTimeout(typeText, typeSpeed);
+        }
+        
+        typeText();
+
+        // Mouse interaction
+        let mouseXNorm = 0;
+        let mouseYNorm = 0;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseXNorm = (event.clientX / window.innerWidth) * 2 - 1;
+            mouseYNorm = -(event.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = Date.now() * 0.001;
+            
+            // Animate neural network
+            if (galaxyGroup.userData.nodes) {
+                const { nodes, connections, nodeGeometry, connectionGeometry, nodeColors, connectionColors } = galaxyGroup.userData;
+                
+                // Update node activations and colors
+                nodes.forEach((node, index) => {
+                    const i3 = index * 3;
+                    
+                    // Pulse activation
+                    node.activation = 0.3 + 0.7 * (Math.sin(time * 2 + node.pulsePhase) * 0.5 + 0.5);
+                    
+                    // Update colors based on activation
+                    const activation = node.activation;
+                    const layerCount = 12;
+                    
+                    if (node.layer < 3) {
+                        // Input layers - blue
+                        nodeColors[i3] = 0.2 + activation * 0.3;
+                        nodeColors[i3 + 1] = 0.4 + activation * 0.4;
+                        nodeColors[i3 + 2] = 0.8 + activation * 0.2;
+                    } else if (node.layer < layerCount - 2) {
+                        // Hidden layers - cyan/green
+                        nodeColors[i3] = 0.1 + activation * 0.4;
+                        nodeColors[i3 + 1] = 0.6 + activation * 0.4;
+                        nodeColors[i3 + 2] = 0.8 + activation * 0.2;
+                    } else {
+                        // Output layers - magenta/white
+                        nodeColors[i3] = 0.8 + activation * 0.2;
+                        nodeColors[i3 + 1] = 0.3 + activation * 0.5;
+                        nodeColors[i3 + 2] = 0.9 + activation * 0.1;
+                    }
+                });
+                
+                // Update connection colors with flowing effect
+                connections.forEach((conn, index) => {
+                    const i6 = index * 6;
+                    const fromNode = nodes[conn.from];
+                    const toNode = nodes[conn.to];
+                    
+                    // Create flowing effect
+                    const flow = Math.sin(time * 3 + conn.pulseOffset) * 0.5 + 0.5;
+                    const strength = conn.strength * (0.3 + flow * 0.7);
+                    
+                    // Signal propagation effect
+                    const signalPhase = (time * 2 + conn.pulseOffset) % (Math.PI * 2);
+                    const signal = Math.sin(signalPhase) * 0.5 + 0.5;
+                    
+                    const r = 0.2 + strength * 0.6 + signal * 0.3;
+                    const g = 0.4 + strength * 0.4 + signal * 0.2;
+                    const b = 0.8 + strength * 0.2 + signal * 0.1;
+                    
+                    connectionColors[i6] = r;
+                    connectionColors[i6 + 1] = g;
+                    connectionColors[i6 + 2] = b;
+                    connectionColors[i6 + 3] = r * 0.3;
+                    connectionColors[i6 + 4] = g * 0.3;
+                    connectionColors[i6 + 5] = b * 0.3;
+                });
+                
+                // Update geometries
+                nodeGeometry.attributes.color.needsUpdate = true;
+                connectionGeometry.attributes.color.needsUpdate = true;
+            }
+            
+            // Rotate neural network galaxy slowly
+            galaxyGroup.rotation.y += 0.002;
+            
+            // Subtle mouse interaction
+            galaxyGroup.rotation.x += (mouseYNorm * 0.1 - galaxyGroup.rotation.x) * 0.05;
+            galaxyGroup.rotation.z += (mouseXNorm * 0.1 - galaxyGroup.rotation.z) * 0.05;
+            
+            // Rotate stars independently
+            stars.rotation.y += 0.0005;
+            stars.rotation.x += 0.0002;
+            
+            // Camera slight movement based on mouse
+            camera.position.x += (mouseXNorm * 20 - camera.position.x) * 0.01;
+            camera.position.y += (mouseYNorm * 20 - camera.position.y) * 0.01;
+            
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case 'ArrowRight':
+                case 'ArrowDown':
+                    if (currentSection < sections.length - 1) {
+                        updateSection(currentSection + 1);
+                    }
+                    break;
+                case 'ArrowLeft':
+                case 'ArrowUp':
+                    if (currentSection > 0) {
+                        updateSection(currentSection - 1);
+                    }
+                    break;
+                case ' ':
+                    event.preventDefault();
+                    updateSection((currentSection + 1) % sections.length);
+                    break;
+            }
+        });
+
+        // Add some sparkle effects
+        setInterval(() => {
+            const sparkles = document.querySelectorAll('.sparkle');
+            sparkles.forEach(sparkle => sparkle.remove());
+            
+            for (let i = 0; i < 3; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.cssText = `
+                    position: fixed;
+                    width: 4px;
+                    height: 4px;
+                    background: #fff;
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 1000;
+                    left: ${Math.random() * window.innerWidth}px;
+                    top: ${Math.random() * window.innerHeight}px;
+                    animation: sparkle 2s ease-out forwards;
+                `;
+                document.body.appendChild(sparkle);
+            }
+        }, 2000);
+
+        // Add sparkle animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes sparkle {
+                0% {
+                    opacity: 0;
+                    transform: scale(0);
+                }
+                50% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+                100% {
+                    opacity: 0;
+                    transform: scale(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Optional: Mouse wheel zoom
+        document.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            
+            const zoomFactor = event.deltaY > 0 ? 1.1 : 0.9;
+            const maxDistance = 1000;
+            const minDistance = 50;
+            
+            const currentDistance = Math.sqrt(
+                camera.position.x * camera.position.x + 
+                camera.position.y * camera.position.y + 
+                camera.position.z * camera.position.z
+            );
+            const newDistance = currentDistance * zoomFactor;
+            
+            // Prevent zooming too far in or out
+            if (newDistance > minDistance && newDistance < maxDistance) {
+                gsap.to(camera.position, {
+                    duration: 0.3,
+                    x: camera.position.x * zoomFactor,
+                    y: camera.position.y * zoomFactor,
+                    z: camera.position.z * zoomFactor,
+                    ease: "power2.out"
+                });
+            }
+        }, { passive: false });
+
+        // Touch/pinch zoom for mobile devices
+        let initialDistance = 0;
+        let initialScale = 1;
+
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                initialDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                initialScale = Math.sqrt(
+                    camera.position.x * camera.position.x + 
+                    camera.position.y * camera.position.y + 
+                    camera.position.z * camera.position.z
+                );
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                
+                const currentDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                
+                const scale = currentDistance / initialDistance;
+                const newScale = initialScale / scale;
+                
+                // Apply zoom with constraints
+                const maxDistance = 1000;
+                const minDistance = 50;
+                
+                if (newScale > minDistance && newScale < maxDistance) {
+                    const factor = newScale / Math.sqrt(
+                        camera.position.x * camera.position.x + 
+                        camera.position.y * camera.position.y + 
+                        camera.position.z * camera.position.z
+                    );
+                    camera.position.x *= factor;
+                    camera.position.y *= factor;
+                    camera.position.z *= factor;
+                }
+            }
+        }, { passive: false });
+
+        // Keyboard zoom controls
+        document.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case '+':
+                case '=':
+                    gsap.to(camera.position, {
+                        duration: 1,
+                        x: camera.position.x * 0.8,
+                        y: camera.position.y * 0.8,
+                        z: camera.position.z * 0.8,
+                        ease: "power2.out"
+                    });
+                    break;
+                case '-':
+                case '_':
+                    gsap.to(camera.position, {
+                        duration: 1,
+                        x: camera.position.x * 1.2,
+                        y: camera.position.y * 1.2,
+                        z: camera.position.z * 1.2,
+                        ease: "power2.out"
+                    });
+                    break;
+            }
+        });
+
+        // Handle resume button click for browsers that don't support download attribute
+        document.getElementById('resume-btn').addEventListener('click', function(e) {
+            const resumePath = this.getAttribute('href');
+            // If href is just "#" (placeholder), prevent default and show alert
+            if (resumePath === '#' || resumePath === 'path/to/your-resume.pdf') {
+                e.preventDefault();
+                alert('Resume will be available soon. Please check back later!');
+            }
+        });
+
+        // Fix button event handlers - replace the existing event handlers at the end of the file
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM fully loaded, attaching button handlers");
+        
+        // Don't replace the buttons - that breaks their href functionality
+        // Instead, just add the ripple effect without interfering with clicks
+        document.querySelectorAll('.btn').forEach(button => {
+            console.log("Attaching handlers to button:", button.textContent);
+            
+            // Create ripple effect on click without preventing default behavior
+            button.addEventListener('click', function(e) {
                 console.log("Button clicked:", this.textContent);
                 
-                // Create ripple effect
+                // Only create ripple - don't interfere with link navigation
                 const ripple = document.createElement('span');
                 ripple.classList.add('btn-ripple');
                 this.appendChild(ripple);
                 
-                // Clean up ripple after animation
+                // Remove ripple after animation completes
                 setTimeout(() => {
                     ripple.remove();
                 }, 600);
             });
+            
+            // Ensure proper focus state for accessibility
+            button.addEventListener('focus', function() {
+                this.style.outline = 'none';
+                this.style.boxShadow = '0 0 0 3px rgba(0, 255, 255, 0.5)';
+            });
+            
+            button.addEventListener('blur', function() {
+                this.style.boxShadow = '';
+            });
         });
         
-        // Special handling only for the resume button placeholder
+        // Update the resume button event handler, but keep it simple
         const resumeBtn = document.getElementById('resume-btn');
         if (resumeBtn) {
-            resumeBtn.addEventListener('click', function(event) {
+            // Remove any existing handlers first
+            const newResumeBtn = resumeBtn.cloneNode(true);
+            resumeBtn.parentNode.replaceChild(newResumeBtn, resumeBtn);
+            
+            // Add new handler
+            newResumeBtn.addEventListener('click', function(e) {
+                console.log("Resume button clicked, checking href");
                 const resumePath = this.getAttribute('href');
                 if (resumePath === '#' || resumePath.includes('your-resume-id')) {
-                    event.preventDefault();
+                    e.preventDefault(); // Only prevent default for placeholder links
                     alert('My resume will be available soon! Please reach out via email if you would like to receive it directly.');
+                    
+                    // Provide visual feedback
+                    this.classList.add('btn-pulse');
+                    setTimeout(() => {
+                        this.classList.remove('btn-pulse');
+                    }, 1000);
                 }
+                // For real links, let the default navigation happen
             });
         }
     });
